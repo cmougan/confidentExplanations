@@ -12,13 +12,14 @@ import numpy as np
 # %%
 
 for disp in [0.001, 0.1, 0.2]:
+    # Create synthetic iid data that depends on a dispersion parameter
     x1, x2 = np.random.multivariate_normal([0, 0], [[disp, 0], [0, disp]], 1000).T
     x3, x4 = np.random.multivariate_normal([1, 1], [[disp, 0], [0, disp]], 1000).T
     plt.figure(figsize=(10, 10))
     plt.scatter(x1, x2, alpha=0.2)
     plt.scatter(x3, x4, alpha=0.2)
     plt.show()
-
+    # Convert to dataframe, add labels, and split into train and test
     X1 = pd.DataFrame([x1, x2]).T
     X1["target"] = 0
     X2 = pd.DataFrame([x3, x4]).T
@@ -32,12 +33,12 @@ for disp in [0.001, 0.1, 0.2]:
         test_size=0.5,
         random_state=0,
     )
-
+    # Fit our detector
     detector = SelectiveAbstentionExplanations(
         model=XGBClassifier(n_estimators=20), gmodel=LogisticRegression(), cov=0.9
     )
     detector.fit(X_tr, y_tr)
-
+    # Print AUC
     print(
         roc_auc_score(
             detector.create_error(X_te, y_te), detector.gpredict_proba(X_te)[:, 1]
