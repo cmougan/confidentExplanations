@@ -7,6 +7,7 @@ import numpy as np
 import shap
 import copy
 
+
 class ShapEstimator(BaseEstimator, ClassifierMixin):
     """
     A ShapValues estimator based on tree explainer.
@@ -290,7 +291,13 @@ class PlugInRule(BaseEstimator, ClassifierMixin):
     >>>     print("coverage is: {}".format(coverage))
     >>>     print("selective accuracy is: {}".format(acc))
     """
-    def __init__(self, model, quantiles: list = [.01, .05, .10, .15, .20, .25], seed: int = 42):
+
+    def __init__(
+        self,
+        model,
+        quantiles: list = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25],
+        seed: int = 42,
+    ):
         self.quantiles = quantiles
         self.seed = seed
         self.thetas = None
@@ -299,17 +306,22 @@ class PlugInRule(BaseEstimator, ClassifierMixin):
     def fit(self, X, y, sample_weight=None):
         self.classes_ = list(np.unique(y))
         check_X_y(X, y)
-        X_train, X_hold, y_train, y_hold = train_test_split(X, y, stratify=y, random_state=self.seed, test_size=0.1)
+        X_train, X_hold, y_train, y_hold = train_test_split(
+            X, y, stratify=y, random_state=self.seed, test_size=0.1
+        )
         self.model.fit(X_train, y_train)
         # quantiles
         probas = self.model.predict_proba(X_hold)
         confs = np.max(probas, axis=1)
         self.thetas = [np.quantile(confs, q) for q in self.quantiles]
+
     def predict_proba(self, X):
         scores = self.model.predict_proba()
         return scores
+
     def predict(self, X):
         return np.argmax(self.predict_proba(X), axis=1)
+
     def qband(self, X):
         probas = self.predict_proba(X)
         confs = np.max(probas, axis=1)

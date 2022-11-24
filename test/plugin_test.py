@@ -28,19 +28,21 @@ def test_doc_examples():
     # scores = clf.predict_proba(X_te)[:,1]
     preds = clf.predict(X_te)
     bands = clf.qband(X_te)
-    for level in range(len(clf.quantiles)+1):
+    for level in range(len(clf.quantiles) + 1):
         selected = bands >= level
-        coverage = len(y[selected])/len(y)
+        coverage = len(y[selected]) / len(y)
         acc = accuracy_score(y_te[selected], preds[selected])
-        print("target coverage is: {}".format(1-clf.quantiles[level]))
+        print("target coverage is: {}".format(1 - clf.quantiles[level]))
         print("coverage is: {}".format(coverage))
         print("selective accuracy is: {}".format(acc))
+
 
 def test_plugin_fitted():
     """
     Check that no NaNs are present in the shap values.
     """
     from sklearn.utils.validation import check_is_fitted
+
     X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
     # X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
@@ -48,6 +50,7 @@ def test_plugin_fitted():
     clf = PlugInRule(model=XGBRegressor())
     clf.fit(X_tr, y_tr)
     assert check_is_fitted(clf.clf_base) is None
+
 
 def test_thetas_estimated():
     """
