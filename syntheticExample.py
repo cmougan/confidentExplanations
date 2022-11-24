@@ -70,6 +70,7 @@ for disp in values:
 
 # %%
 plt.plot()
+plt.title("Accuracy over accepted instances with coverage = {}".format(cov))
 plt.plot(values, res_plugIn, label="PlugIn")
 plt.plot(values, res_sax, label="SAX")
 plt.legend()
