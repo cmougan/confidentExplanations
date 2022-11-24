@@ -260,7 +260,6 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
             )
 
 
-# pluginrule
 class PlugInRule(BaseEstimator, ClassifierMixin):
     """
     Given a model
