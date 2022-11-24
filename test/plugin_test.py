@@ -15,7 +15,7 @@ def test_doc_examples():
     """
     from sklearn.model_selection import train_test_split
     from sklearn.datasets import make_blobs
-    from xgboost import XGBRegressor
+    from xgboost import XGBClassifier
     from tools.xaiUtils import PlugInRule
     from sklearn.metrics import accuracy_score
 
@@ -23,16 +23,17 @@ def test_doc_examples():
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
     # X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
 
-    clf = PlugInRule(model=XGBRegressor())
+    clf = PlugInRule(model=XGBClassifier())
     clf.fit(X_tr, y_tr)
     # scores = clf.predict_proba(X_te)[:,1]
     preds = clf.predict(X_te)
     bands = clf.qband(X_te)
-    for level in range(len(clf.quantiles) + 1):
+    for i,level in enumerate(clf.quantiles):
+        print(i)
         selected = bands >= level
-        coverage = len(y[selected]) / len(y)
+        coverage = len(y_te[selected]) / len(y_te)
         acc = accuracy_score(y_te[selected], preds[selected])
-        print("target coverage is: {}".format(1 - clf.quantiles[level]))
+        print("target coverage is: {}".format(1 - clf.quantiles[i]))
         print("coverage is: {}".format(coverage))
         print("selective accuracy is: {}".format(acc))
 
@@ -47,9 +48,9 @@ def test_plugin_fitted():
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
     # X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
 
-    clf = PlugInRule(model=XGBRegressor())
+    clf = PlugInRule(model=XGBClassifier())
     clf.fit(X_tr, y_tr)
-    assert check_is_fitted(clf.clf_base) is None
+    assert check_is_fitted(clf.model) is None
 
 
 def test_thetas_estimated():
@@ -60,6 +61,6 @@ def test_thetas_estimated():
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
     # X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
 
-    clf = PlugInRule(model=XGBRegressor())
+    clf = PlugInRule(model=XGBClassifier())
     clf.fit(X_tr, y_tr)
     assert clf.thetas is not None

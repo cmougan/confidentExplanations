@@ -316,7 +316,7 @@ class PlugInRule(BaseEstimator, ClassifierMixin):
         self.thetas = [np.quantile(confs, q) for q in self.quantiles]
 
     def predict_proba(self, X):
-        scores = self.model.predict_proba()
+        scores = self.model.predict_proba(X)
         return scores
 
     def predict(self, X):
