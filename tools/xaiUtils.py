@@ -1,10 +1,11 @@
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.metrics import roc_auc_score, accuracy_score
 import pandas as pd
 import numpy as np
 import shap
+import copy
 
 
 class ShapEstimator(BaseEstimator, ClassifierMixin):
@@ -77,11 +78,11 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
     # 0.5
     """
 
-    def __init__(self, model, gmodel, cov: int = 0.95):
+    def __init__(self, model, gmodel, cov: float = 0.95, cv=None):
         self.model = model
         self.gmodel = gmodel
         self.cov = cov
-
+        self.cv = cv
         # Supported F Models
         self.supported_tree_models = ["XGBClassifier", "LGBMClassifier"]
         self.supported_linear_models = [
@@ -129,7 +130,6 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
 
         # Check that X and y have correct shape
         check_X_y(X_source, y_source)
-
         self.X_tr, self.X_val, self.y_tr, self.y_val = train_test_split(
             X_source, y_source, random_state=0, test_size=0.5
         )
@@ -258,3 +258,71 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
                     self.supported_linear_detector, self.model.__class__.__name__
                 )
             )
+
+
+# pluginrule
+class PlugInRule(BaseEstimator, ClassifierMixin):
+    """
+    Given a model
+
+    Example
+    -------
+    >>> import pandas as pd
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.datasets import make_blobs
+    >>> from xgboost import XGBRegressor
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from tools.xaiUtils import PlugInRule
+
+    >>> X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
+    >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
+    >>> X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
+
+    >>> clf = PlugInRule(model=XGBRegressor())
+    >>> clf.fit(X_tr, y_tr)
+    >>> scores = clf.predict_proba(X_te)[:,1]
+    >>> preds = clf.predict(X_te)
+    >>> bands = clf.qband(X_te)
+    >>> for level in range(len(clf.quantiles)+1):
+    >>>     selected = bands >= level
+    >>>     coverage = len(y[selected])/len(y)
+    >>>     acc = accuracy_score(y_te[selected], preds[selected])
+    >>>     print("target coverage is: {}".format(1-clf.quantiles[level]))
+    >>>     print("coverage is: {}".format(coverage))
+    >>>     print("selective accuracy is: {}".format(acc))
+    """
+
+    def __init__(
+        self,
+        model,
+        quantiles: list = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25],
+        seed: int = 42,
+    ):
+        self.quantiles = quantiles
+        self.seed = seed
+        self.thetas = None
+        self.model = copy.deepcopy(model)
+
+    def fit(self, X, y, sample_weight=None):
+        self.classes_ = list(np.unique(y))
+        check_X_y(X, y)
+        X_train, X_hold, y_train, y_hold = train_test_split(
+            X, y, stratify=y, random_state=self.seed, test_size=0.1
+        )
+        self.model.fit(X_train, y_train)
+        # quantiles
+        probas = self.model.predict_proba(X_hold)
+        confs = np.max(probas, axis=1)
+        self.thetas = [np.quantile(confs, q) for q in self.quantiles]
+
+    def predict_proba(self, X):
+        scores = self.model.predict_proba()
+        return scores
+
+    def predict(self, X):
+        return np.argmax(self.predict_proba(X), axis=1)
+
+    def qband(self, X):
+        probas = self.predict_proba(X)
+        confs = np.max(probas, axis=1)
+        return np.digitize(confs, self.thetas)
