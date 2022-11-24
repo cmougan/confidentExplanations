@@ -5,21 +5,26 @@ from sklearn.datasets import make_blobs
 from tools.xaiUtils import SelectiveAbstentionExplanations
 from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score
 import matplotlib.pyplot as plt
 import numpy as np
 from tools.xaiUtils import PlugInRule
 
 # %%
 cov = 0.9
-for disp in [0.001, 0.1, 0.2]:
+plot = False
+res_plugIn = []
+res_sax = []
+values = np.linspace(0.1, 0.9, 9)
+for disp in values:
     # Create synthetic iid data that depends on a dispersion parameter
     x1, x2 = np.random.multivariate_normal([0, 0], [[disp, 0], [0, disp]], 1000).T
     x3, x4 = np.random.multivariate_normal([1, 1], [[disp, 0], [0, disp]], 1000).T
-    plt.figure(figsize=(10, 10))
-    plt.scatter(x1, x2, alpha=0.2)
-    plt.scatter(x3, x4, alpha=0.2)
-    plt.show()
+    if plot:
+        plt.figure(figsize=(10, 10))
+        plt.scatter(x1, x2, alpha=0.2)
+        plt.scatter(x3, x4, alpha=0.2)
+        plt.show()
     # Convert to dataframe, add labels, and split into train and test
     X1 = pd.DataFrame([x1, x2]).T
     X1["target"] = 0
@@ -43,10 +48,32 @@ for disp in [0.001, 0.1, 0.2]:
     plugIn = PlugInRule(model=LogisticRegression())
     plugIn.fit(X_tr, y_tr)
 
-    # Print AUC
-    res_det = roc_auc_score(
-        detector.create_error(X_te, y_te), detector.gpredict_proba(X_te)[:, 1]
+    # Evaluation
+    # SAX
+    ## Accuracy over accepted instances
+    selected = detector.gpredict(X_te).astype(bool)
+    preds = detector.fpredict(X_te).astype(bool)
+    res_sax.append(
+        accuracy_score(y_te[selected], preds[selected]),
     )
+    if accuracy_score(y_te, preds) > accuracy_score(y_te[selected], preds[selected]):
+        print("SAX Accuracy over accepted instances is worse than overall accuracy")
+    # Plug in
+    selected = plugIn.predict(X_te).astype(bool)
+    preds = plugIn.model.predict(X_te).astype(bool)
+    res_plugIn.append(
+        accuracy_score(y_te[selected], preds[selected]),
+    )
+    if accuracy_score(y_te, preds) > accuracy_score(y_te[selected], preds[selected]):
+        print("PlugIn Accuracy over accepted instances is worse than overall accuracy")
 
 
+# %%
+plt.plot()
+plt.plot(values, res_plugIn, label="PlugIn")
+plt.plot(values, res_sax, label="SAX")
+plt.legend()
+plt.xlabel("Dispersion")
+plt.ylabel("Accuracy")
+plt.show()
 # %%
