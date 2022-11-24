@@ -132,3 +132,14 @@ def test_get_model_types():
         gmodel=Pipeline([("scaler", StandardScaler()), ("lr", LogisticRegression())]),
     )
     assert esd.get_gmodel_type(), esd.get_model_type() == ("linear", "linear")
+
+
+def test_predict_is_bool():
+    """
+    Check that the prediction is a boolean.
+    """
+    esd = SelectiveAbstentionExplanations(
+        model=LogisticRegression(), gmodel=LogisticRegression()
+    )
+    esd.fit(X, y)
+    assert esd.gpredict(X).dtype == bool

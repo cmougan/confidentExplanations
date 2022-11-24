@@ -164,7 +164,7 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
         return self.model.predict_proba(X)
 
     def gpredict(self, X):
-        return self.gmodel.predict(self.get_explanations(X))
+        return self.gmodel.predict(self.get_explanations(X)).astype(bool)
 
     def gpredict_proba(self, X):
         return self.gmodel.predict_proba(self.get_explanations(X))

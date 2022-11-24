@@ -8,9 +8,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 import numpy as np
+from tools.xaiUtils import PlugInRule
 
 # %%
-
+cov = 0.9
 for disp in [0.001, 0.1, 0.2]:
     # Create synthetic iid data that depends on a dispersion parameter
     x1, x2 = np.random.multivariate_normal([0, 0], [[disp, 0], [0, disp]], 1000).T
@@ -35,14 +36,17 @@ for disp in [0.001, 0.1, 0.2]:
     )
     # Fit our detector
     detector = SelectiveAbstentionExplanations(
-        model=XGBClassifier(n_estimators=20), gmodel=LogisticRegression(), cov=0.9
+        model=LogisticRegression(), gmodel=XGBClassifier(), cov=cov
     )
     detector.fit(X_tr, y_tr)
+    # Fit plug in
+    plugIn = PlugInRule(model=LogisticRegression())
+    plugIn.fit(X_tr, y_tr)
+
     # Print AUC
-    print(
-        roc_auc_score(
-            detector.create_error(X_te, y_te), detector.gpredict_proba(X_te)[:, 1]
-        )
+    res_det = roc_auc_score(
+        detector.create_error(X_te, y_te), detector.gpredict_proba(X_te)[:, 1]
     )
+
 
 # %%
