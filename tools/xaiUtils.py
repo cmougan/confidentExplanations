@@ -280,49 +280,44 @@ class PlugInRule(BaseEstimator, ClassifierMixin):
 
     >>> clf = PlugInRule(model=XGBRegressor())
     >>> clf.fit(X_tr, y_tr)
-    >>> scores = clf.predict_proba(X_te)[:,1]
-    >>> preds = clf.predict(X_te)
-    >>> bands = clf.qband(X_te)
-    >>> for level in range(len(clf.quantiles)+1):
-    >>>     selected = bands >= level
-    >>>     coverage = len(y[selected])/len(y)
-    >>>     acc = accuracy_score(y_te[selected], preds[selected])
-    >>>     print("target coverage is: {}".format(1-clf.quantiles[level]))
-    >>>     print("coverage is: {}".format(coverage))
-    >>>     print("selective accuracy is: {}".format(acc))
+    >>> clf.predict(X_te)
+
+
     """
 
     def __init__(
         self,
         model,
-        quantiles: list = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25],
         seed: int = 42,
     ):
-        self.quantiles = quantiles
         self.seed = seed
-        self.thetas = None
-        self.model = copy.deepcopy(model)
+        self.model = model
 
-    def fit(self, X, y, sample_weight=None):
-        self.classes_ = list(np.unique(y))
+    def fit(self, X, y):
+        # Dimensionality check
         check_X_y(X, y)
-        X_train, X_hold, y_train, y_hold = train_test_split(
+
+        # Split the data and save hold out sets
+        X_train, self.X_hold, y_train, self.y_hold = train_test_split(
             X, y, stratify=y, random_state=self.seed, test_size=0.1
         )
+        # Fit the model
         self.model.fit(X_train, y_train)
-        # quantiles
-        probas = self.model.predict_proba(X_hold)
+
+    def compute_theta(self, q: int = 0.9):
+        # Compute the scores
+        scores = np.max(self.model.predict_proba(self.X_hold), axis=1)
+
+        # TODO : check if the quantile is a list and save a list
+
+        # Compute the theta
+        self.theta = np.quantile(scores, q)
+
+    def predict(self, X, cov: int = 0.9):
+
+        # TODO check if the below function has been called
+        self.compute_theta(1 - cov)
+
+        probas = self.model.predict_proba(X)
         confs = np.max(probas, axis=1)
-        self.thetas = [np.quantile(confs, q) for q in self.quantiles]
-
-    def predict_proba(self, X):
-        scores = self.model.predict_proba(X)
-        return scores
-
-    def predict(self, X):
-        return np.argmax(self.predict_proba(X), axis=1)
-
-    def qband(self, X):
-        probas = self.predict_proba(X)
-        confs = np.max(probas, axis=1)
-        return np.digitize(confs, self.thetas)
+        return confs > self.theta

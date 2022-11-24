@@ -1,8 +1,11 @@
 from tools.xaiUtils import PlugInRule
-from xgboost import XGBClassifier, XGBRegressor
+from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_blobs
 import numpy as np
+import pytest
+from sklearn.metrics import accuracy_score
 
 X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
 X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
@@ -13,54 +16,44 @@ def test_doc_examples():
     """
     Test it works
     """
-    from sklearn.model_selection import train_test_split
-    from sklearn.datasets import make_blobs
-    from xgboost import XGBClassifier
-    from tools.xaiUtils import PlugInRule
-    from sklearn.metrics import accuracy_score
-
     X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
-    # X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
 
-    clf = PlugInRule(model=XGBClassifier())
+    clf = PlugInRule(model=LogisticRegression())
     clf.fit(X_tr, y_tr)
-    # scores = clf.predict_proba(X_te)[:,1]
-    preds = clf.predict(X_te)
-    bands = clf.qband(X_te)
-    for i,level in enumerate(clf.quantiles):
-        print(i)
-        selected = bands >= level
-        coverage = len(y_te[selected]) / len(y_te)
-        acc = accuracy_score(y_te[selected], preds[selected])
-        print("target coverage is: {}".format(1 - clf.quantiles[i]))
-        print("coverage is: {}".format(coverage))
-        print("selective accuracy is: {}".format(acc))
+    assert sum(clf.predict(X_te)) == 830
+
+
+def test_quantile_works():
+    """
+    Test that if you increase the parameter of coverage, the number of
+    instance accepted increases
+    """
+    det = PlugInRule(model=LogisticRegression())
+    det.fit(X_tr, y_tr)
+    # Compute quantiles
+    cov99 = sum(det.predict(X_te, cov=0.99))
+    cov9 = sum(det.predict(X_te, cov=0.9))
+    cov5 = sum(det.predict(X_te, cov=0.5))
+    assert cov99 > cov9 > cov5
 
 
 def test_plugin_fitted():
     """
     Check that no NaNs are present in the shap values.
     """
-    from sklearn.utils.validation import check_is_fitted
-
-    X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
-    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
-    # X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
-
-    clf = PlugInRule(model=XGBClassifier())
-    clf.fit(X_tr, y_tr)
-    assert check_is_fitted(clf.model) is None
+    # clf = PlugInRule(model=XGBClassifier())
+    # with pytest.raises(ValueError):
+    # clf.predict(X_te)
 
 
 def test_thetas_estimated():
     """
-    Check that thetas are estimated after fit
-    """
-    X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
-    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
-    # X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
+    Check that theta has being called
 
-    clf = PlugInRule(model=XGBClassifier())
+    """
+
+    clf = PlugInRule(model=LogisticRegression())
     clf.fit(X_tr, y_tr)
-    assert clf.thetas is not None
+    clf.predict(X_te)
+    assert clf.theta is not None
