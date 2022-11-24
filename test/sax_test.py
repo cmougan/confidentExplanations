@@ -60,21 +60,8 @@ def test_not_supported_models():
 
 def test_doc_examples():
     """
-    Check that doc examples work.
+    TODO : add a test for the doc examples.
     """
-
-    detector = SelectiveAbstentionExplanations(
-        model=XGBRegressor(random_state=0), gmodel=LogisticRegression()
-    )
-    # On OOD
-    detector.fit(
-        X_source=X_tr,
-        y_source=y_tr,
-    )
-    assert np.round(detector.get_auc_val(), decimals=2) == 0.77
-    # On test
-    detector.fit(X_source=X_tr, y_source=y_tr, X_ood=X_te)
-    assert np.round(detector.get_auc_val(), decimals=2) == 0.53
 
 
 def test_no_nan():
@@ -82,7 +69,7 @@ def test_no_nan():
     Check that no NaNs are present in the shap values.
     """
     esd = SelectiveAbstentionExplanations(
-        model=LinearRegression(), gmodel=LogisticRegression()
+        model=LogisticRegression(), gmodel=LogisticRegression()
     )
     esd.fit_model(X, y)
     ex = esd.get_explanations(X)
@@ -94,9 +81,9 @@ def test_get_coefs_linear():
     Check that the coefficients are returned correctly for the linear regression.
     """
     esd = SelectiveAbstentionExplanations(
-        model=LinearRegression(), gmodel=LogisticRegression()
+        model=LogisticRegression(), gmodel=LogisticRegression()
     )
-    esd.fit(X, y, X_ood)
+    esd.fit(X, y)
     coefs = esd.get_linear_coefs()
     # Assert shape
     assert coefs.shape[1] == X.shape[1]
@@ -119,10 +106,10 @@ def test_get_coefs_pipeline():
     from sklearn.preprocessing import StandardScaler
 
     esd = SelectiveAbstentionExplanations(
-        model=LinearRegression(),
+        model=LogisticRegression(),
         gmodel=Pipeline([("scaler", StandardScaler()), ("lr", LogisticRegression())]),
     )
-    esd.fit(X, y, X_ood)
+    esd.fit(X, y)
     coefs = esd.get_coefs()
     # Assert shape
     assert coefs.shape[1] == X.shape[1]
@@ -138,12 +125,12 @@ def test_get_model_types():
     from sklearn.preprocessing import StandardScaler
 
     esd = SelectiveAbstentionExplanations(
-        model=LinearRegression(), gmodel=LogisticRegression()
+        model=LogisticRegression(), gmodel=LogisticRegression()
     )
     assert esd.get_gmodel_type(), esd.get_model_type() == ("linear", "linear")
     # Case of pipeline
     esd = SelectiveAbstentionExplanations(
-        model=Pipeline([("scaler", StandardScaler()), ("lr", LinearRegression())]),
+        model=Pipeline([("scaler", StandardScaler()), ("lr", LogisticRegression())]),
         gmodel=Pipeline([("scaler", StandardScaler()), ("lr", LogisticRegression())]),
     )
     assert esd.get_gmodel_type(), esd.get_model_type() == ("linear", "linear")
