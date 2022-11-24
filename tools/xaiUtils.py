@@ -260,7 +260,6 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
             )
 
 
-# pluginrule
 class PlugInRule(BaseEstimator, ClassifierMixin):
     """
     Given a model
@@ -273,11 +272,8 @@ class PlugInRule(BaseEstimator, ClassifierMixin):
     >>> from xgboost import XGBRegressor
     >>> from sklearn.linear_model import LogisticRegression
     >>> from tools.xaiUtils import PlugInRule
-
     >>> X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
     >>> X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
-    >>> X_ood,y_ood = make_blobs(n_samples=1000, centers=1, n_features=5, random_state=0)
-
     >>> clf = PlugInRule(model=XGBRegressor())
     >>> clf.fit(X_tr, y_tr)
     >>> clf.predict(X_te)
