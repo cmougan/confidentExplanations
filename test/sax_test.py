@@ -143,3 +143,36 @@ def test_predict_is_bool():
     )
     esd.fit(X, y)
     assert esd.gpredict(X).dtype == bool
+
+
+def test_check_is_predicting_something():
+    """
+    Check that all predictions are not zero
+    """
+    # TODO
+
+
+def test_check_use_explanations():
+    """
+    Check that the use_explanations method works.
+    """
+    esd0 = SelectiveAbstentionExplanations(
+        model=LogisticRegression(),
+        gmodel=LogisticRegression(),
+        use_explanation_space=False,
+    )
+    esd0.fit(X, y)
+    assert esd0.get_explanations(X).shape[1] == 1
+    esd1 = SelectiveAbstentionExplanations(
+        model=LogisticRegression(),
+        gmodel=LogisticRegression(),
+    )
+    esd1.fit(X, y)
+    assert esd0.get_explanations(X).shape[1] != esd1.get_explanations(X).shape[1]
+
+
+def test_check_use_explanations_learns():
+    """
+    Check that the use_explanations method learns.
+    # TODO
+    """

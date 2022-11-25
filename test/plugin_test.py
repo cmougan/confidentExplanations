@@ -1,11 +1,7 @@
-from tools.xaiUtils import PlugInRule
-from xgboost import XGBClassifier
+from tools.PlugIn import PlugInRule
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_blobs
-import numpy as np
-import pytest
-from sklearn.metrics import accuracy_score
 
 X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
 X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
