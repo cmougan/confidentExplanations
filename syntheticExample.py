@@ -67,7 +67,7 @@ for disp in values:
         print("PlugIn Accuracy over accepted instances is worse than overall accuracy")
 
     # Plots
-    plt.figure()
+    plt.figure(figsize=(10, 10))
     X1 = df[df["label"] == 1]
     X0 = df[df["label"] == 0]
     plt.scatter(X1["var1"], X1["var2"], alpha=0.1, label="Class0")
@@ -86,7 +86,7 @@ for disp in values:
 
 
 # %%
-plt.plot()
+plt.figure(figsize=(10, 10))
 plt.title("Accuracy over accepted instances with coverage = {}".format(cov))
 plt.plot(values, res_plugIn, label="PlugIn")
 plt.plot(values, res_sax, label="SAX")
