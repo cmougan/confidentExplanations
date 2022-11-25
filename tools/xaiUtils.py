@@ -262,7 +262,7 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
 
 class PlugInRule(BaseEstimator, ClassifierMixin):
     """
-    Given a model
+    TODO Doc
 
     Example
     -------
@@ -277,8 +277,6 @@ class PlugInRule(BaseEstimator, ClassifierMixin):
     >>> clf = PlugInRule(model=XGBRegressor())
     >>> clf.fit(X_tr, y_tr)
     >>> clf.predict(X_te)
-
-
     """
 
     def __init__(
@@ -304,13 +302,12 @@ class PlugInRule(BaseEstimator, ClassifierMixin):
         # Compute the scores
         scores = np.max(self.model.predict_proba(self.X_hold), axis=1)
 
-        # TODO : check if the quantile is a list and save a list
+        # TODO : deal with quantile lists
 
         # Compute the theta
         self.theta = np.quantile(scores, q)
 
     def predict(self, X, cov: int = 0.9):
-
         # TODO check if the below function has been called
         self.compute_theta(1 - cov)
 
