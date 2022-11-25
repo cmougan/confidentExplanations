@@ -28,9 +28,7 @@ res_plugIn = []
 values = np.linspace(0.1, 1.5, 20)
 for disp in values:
     # Create synthetic iid data that depends on a dispersion parameter
-    X, y = make_blobs(
-        n_samples=2000, centers=2, n_features=2, random_state=0, cluster_std=disp
-    )
+    X, y = make_blobs(n_samples=2000, centers=2, n_features=2, cluster_std=disp)
     df = pd.DataFrame(X, columns=["var1", "var2"])
     df["label"] = y
 
@@ -39,7 +37,6 @@ for disp in values:
         y,
         stratify=y,
         test_size=0.5,
-        random_state=0,
     )
     F = LogisticRegression()
     G = DecisionTreeClassifier()
