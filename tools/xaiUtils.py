@@ -77,11 +77,14 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
     # 0.5
     """
 
-    def __init__(self, model, gmodel, cov: float = 0.95, cv=None):
+    def __init__(
+        self, model, gmodel, cov: float = 0.95, use_explanation_space: bool = True
+    ):
         self.model = model
         self.gmodel = gmodel
         self.cov = cov
-        self.cv = cv
+        self.use_explanation_space = use_explanation_space
+
         # Supported F Models
         self.supported_tree_models = ["XGBClassifier", "LGBMClassifier"]
         self.supported_linear_models = [
@@ -178,6 +181,8 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
         self.model.fit(X, y)
 
     def get_explanations(self, X):
+        if self.use_explanation_space == False:
+            return self.model.predict_proba(X)[:, 1].reshape(-1, 1)
         # Determine the type of SHAP explainer to use
         if self.get_model_type() in self.supported_tree_models:
             self.explainer = shap.Explainer(self.model)

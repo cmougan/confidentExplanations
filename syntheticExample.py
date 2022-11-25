@@ -7,8 +7,9 @@ from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, accuracy_score
 import matplotlib.pyplot as plt
+plt.style.use('seaborn-whitegrid')
 import numpy as np
-from tools.xaiUtils import PlugInRule
+from tools.PlugIn import PlugInRule
 
 # %%
 cov = 0.9
@@ -38,13 +39,21 @@ for disp in values:
         model=LogisticRegression(), gmodel=XGBClassifier(), cov=cov
     )
     detector.fit(X_tr, y_tr)
+    # Detector baseline on prediction space instead of explanation space
+    det_pred = SelectiveAbstentionExplanations(
+        model=LogisticRegression(),
+        gmodel=XGBClassifier(),
+        cov=cov,
+        use_explanation_space=False,
+    )
+    det_pred.fit(X_tr, y_tr)
     # Fit plug in
     plugIn = PlugInRule(model=LogisticRegression())
     plugIn.fit(X_tr, y_tr)
 
     # Evaluation
-    # SAX
     # TODO : name all predictions equally so we can reuse the same code
+    # SAX
     ## Accuracy over accepted instances
     selected = detector.gpredict(X_te).astype(bool)
     preds = detector.fpredict(X_te).astype(bool)
@@ -52,8 +61,8 @@ for disp in values:
         accuracy_score(y_te[selected], preds[selected]),
     )
     res_sax_actual_cov.append(sum(selected) / len(selected))
-    if accuracy_score(y_te, preds) > accuracy_score(y_te[selected], preds[selected]):
-        print("SAX Accuracy over accepted instances is worse than overall accuracy")
+    # Detector baseline
+    selected_base = det_pred.gpredict(X_te).astype(bool)
     # Plug in
     selected_plug = plugIn.predict(X_te).astype(bool)
     preds_plug = plugIn.model.predict(X_te).astype(bool)
@@ -61,10 +70,6 @@ for disp in values:
         accuracy_score(y_te[selected_plug], preds[selected_plug]),
     )
     res_plugin_actual_cov.append(sum(selected_plug) / len(selected_plug))
-    if accuracy_score(y_te, preds) > accuracy_score(
-        y_te[selected_plug], preds[selected_plug]
-    ):
-        print("PlugIn Accuracy over accepted instances is worse than overall accuracy")
 
     # Plots
     plt.figure(figsize=(10, 10))
@@ -80,6 +85,13 @@ for disp in values:
     )
     plt.scatter(
         X_te[~selected][:, 0], X_te[~selected][:, 1], alpha=0.5, marker="+", label="SAX"
+    )
+    plt.scatter(
+        X_te[~selected_base][:, 0],
+        X_te[~selected_base][:, 1],
+        alpha=0.5,
+        marker=".",
+        label="SAX Base",
     )
     plt.legend()
     plt.show()
