@@ -143,3 +143,10 @@ def test_predict_is_bool():
     )
     esd.fit(X, y)
     assert esd.gpredict(X).dtype == bool
+
+
+def test_check_is_predicting_something():
+    """
+    Check that all predictions are not zero
+    """
+    # TODO
