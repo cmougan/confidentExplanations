@@ -7,18 +7,22 @@ from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, accuracy_score
 import matplotlib.pyplot as plt
-plt.style.use('seaborn-whitegrid')
+
+plt.style.use("seaborn-whitegrid")
 import numpy as np
 from tools.PlugIn import PlugInRule
 
 # %%
 cov = 0.9
 plot = False
-res_plugIn = []
+
 res_sax = []
 res_sax_actual_cov = []
+res_sax_base = []
+res_sax_base_actual_cov = []
 res_plugin_actual_cov = []
-values = np.linspace(0.1, 0.9, 9)
+res_plugIn = []
+values = np.linspace(0.1, 1.5, 20)
 for disp in values:
     # Create synthetic iid data that depends on a dispersion parameter
     X, y = make_blobs(
@@ -63,6 +67,11 @@ for disp in values:
     res_sax_actual_cov.append(sum(selected) / len(selected))
     # Detector baseline
     selected_base = det_pred.gpredict(X_te).astype(bool)
+    preds_base = det_pred.fpredict(X_te).astype(bool)
+    res_sax_base.append(
+        accuracy_score(y_te[selected_base], preds[selected_base]),
+    )
+    res_sax_base_actual_cov.append(sum(selected_base) / len(selected_base))
     # Plug in
     selected_plug = plugIn.predict(X_te).astype(bool)
     preds_plug = plugIn.model.predict(X_te).astype(bool)
@@ -95,13 +104,13 @@ for disp in values:
     )
     plt.legend()
     plt.show()
-
-
 # %%
 plt.figure(figsize=(10, 10))
 plt.title("Accuracy over accepted instances with coverage = {}".format(cov))
 plt.plot(values, res_plugIn, label="PlugIn")
+
 plt.plot(values, res_sax, label="SAX")
+plt.plot(values, res_sax_base, label="SAX Base")
 plt.legend()
 plt.xlabel("Dispersion")
 plt.ylabel("Accuracy")
@@ -111,7 +120,10 @@ plt.plot()
 plt.title("Actual coverage = {}".format(cov))
 plt.plot(values, res_plugin_actual_cov, label="PlugIn")
 plt.plot(values, res_sax_actual_cov, label="SAX")
+plt.plot(values, res_sax_base_actual_cov, label="SAX Base")
 plt.legend()
 plt.xlabel("Dispersion")
 plt.ylabel("Accuracy")
 plt.show()
+
+# %%
