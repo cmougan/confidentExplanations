@@ -2,10 +2,13 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_blobs
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import roc_auc_score, accuracy_score
+
 from tools.xaiUtils import SelectiveAbstentionExplanations
 from xgboost import XGBClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, accuracy_score
+
 import matplotlib.pyplot as plt
 
 plt.style.use("seaborn-whitegrid")
@@ -38,21 +41,23 @@ for disp in values:
         test_size=0.5,
         random_state=0,
     )
+    F = LogisticRegression()
+    G = DecisionTreeClassifier()
     # Fit our detector
     detector = SelectiveAbstentionExplanations(
-        model=LogisticRegression(), gmodel=XGBClassifier(), cov=cov
+        model=F, gmodel=G, cov=cov
     )
     detector.fit(X_tr, y_tr)
     # Detector baseline on prediction space instead of explanation space
     det_pred = SelectiveAbstentionExplanations(
-        model=LogisticRegression(),
-        gmodel=XGBClassifier(),
+        model=F,
+        gmodel=G,
         cov=cov,
         use_explanation_space=False,
     )
     det_pred.fit(X_tr, y_tr)
     # Fit plug in
-    plugIn = PlugInRule(model=LogisticRegression())
+    plugIn = PlugInRule(model=F)
     plugIn.fit(X_tr, y_tr)
 
     # Evaluation
@@ -108,7 +113,6 @@ for disp in values:
 plt.figure(figsize=(10, 10))
 plt.title("Accuracy over accepted instances with coverage = {}".format(cov))
 plt.plot(values, res_plugIn, label="PlugIn")
-
 plt.plot(values, res_sax, label="SAX")
 plt.plot(values, res_sax_base, label="SAX Base")
 plt.legend()
