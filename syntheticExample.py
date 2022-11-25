@@ -44,9 +44,7 @@ for disp in values:
     F = LogisticRegression()
     G = DecisionTreeClassifier()
     # Fit our detector
-    detector = SelectiveAbstentionExplanations(
-        model=F, gmodel=G, cov=cov
-    )
+    detector = SelectiveAbstentionExplanations(model=F, gmodel=G, cov=cov)
     detector.fit(X_tr, y_tr)
     # Detector baseline on prediction space instead of explanation space
     det_pred = SelectiveAbstentionExplanations(
