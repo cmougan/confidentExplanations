@@ -86,7 +86,7 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
         self.use_explanation_space = use_explanation_space
 
         # Supported F Models
-        self.supported_tree_models = ["XGBClassifier", "LGBMClassifier"]
+        self.supported_tree_models = ["XGBClassifier", "LGBMClassifier","DecisionTreeClassifier"]
         self.supported_linear_models = [
             "LogisticRegression",
         ]
@@ -97,7 +97,7 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
         self.supported_linear_detectors = [
             "LogisticRegression",
         ]
-        self.supported_tree_detectors = ["XGBClassifier", "LGBMClassifier"]
+        self.supported_tree_detectors = ["XGBClassifier", "LGBMClassifier","DecisionTreeClassifier"]
         self.supported_detectors = (
             self.supported_linear_detectors + self.supported_tree_detectors
         )
