@@ -1,5 +1,10 @@
 # confidentExplanations
 
+At the moment I am struggling with understanding the behaviour of the model. This is because I dont understand what is happenning.
+
+Particularly I dont understand why the SAX that learns on the explanations is worst than SAX learning on the prediction space.
+
+Also I believe that we should try with more complicated 2D synthetic data adn see if the behaviour is the one we expect. As a debugging strategy
 ## What metrics do we need for evaluation?
 
 Using always AUC with soft probabilities and accuracy
