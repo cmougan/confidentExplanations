@@ -1,18 +1,21 @@
 # %%
+# Imports
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+plt.style.use("seaborn-whitegrid")
+from xgboost import XGBClassifier
+
+# Sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, accuracy_score
 
-from tools.xaiUtils import SelectiveAbstentionExplanations
-from xgboost import XGBClassifier
-
-import matplotlib.pyplot as plt
-
-plt.style.use("seaborn-whitegrid")
-import numpy as np
+# Custom libraries
 from tools.PlugIn import PlugInRule
+from tools.xaiUtils import SelectiveAbstentionExplanations
 
 # %%
 cov = 0.9
