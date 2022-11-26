@@ -86,10 +86,11 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
         self.use_explanation_space = use_explanation_space
 
         # Supported F Models
-        self.supported_tree_models = ["XGBClassifier", "LGBMClassifier","DecisionTreeClassifier"]
-        self.supported_linear_models = [
-            "LogisticRegression",
+        self.supported_tree_models = [
+            "XGBClassifier",
+            "LGBMClassifier",
         ]
+        self.supported_linear_models = ["LogisticRegression"]
         self.supported_models = (
             self.supported_tree_models + self.supported_linear_models
         )
@@ -97,7 +98,11 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
         self.supported_linear_detectors = [
             "LogisticRegression",
         ]
-        self.supported_tree_detectors = ["XGBClassifier", "LGBMClassifier","DecisionTreeClassifier"]
+        self.supported_tree_detectors = [
+            "XGBClassifier",
+            "LGBMClassifier",
+            "DecisionTreeClassifier",
+        ]
         self.supported_detectors = (
             self.supported_linear_detectors + self.supported_tree_detectors
         )
@@ -166,9 +171,11 @@ class SelectiveAbstentionExplanations(BaseEstimator, ClassifierMixin):
         return self.model.predict_proba(X)
 
     def gpredict(self, X):
+        check_is_fitted(self.gmodel)
         return self.gmodel.predict(self.get_explanations(X)).astype(bool)
 
     def gpredict_proba(self, X):
+        check_is_fitted(self.gmodel)
         return self.gmodel.predict_proba(self.get_explanations(X))
 
     def explanation_predict(self, X):

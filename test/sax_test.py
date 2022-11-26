@@ -5,7 +5,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_blobs
 import pandas as pd
 import numpy as np
-
+from sklearn.neural_network import MLPClassifier
+import pytest
+from sklearn.tree import DecisionTreeClassifier
 
 X, y = make_blobs(n_samples=2000, centers=2, n_features=5, random_state=0)
 X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.5, random_state=0)
@@ -42,9 +44,6 @@ def test_not_supported_models():
     """
     Check that models are not supported.
     """
-
-    from sklearn.neural_network import MLPClassifier
-    import pytest
 
     with pytest.raises(ValueError):
         SelectiveAbstentionExplanations(
@@ -176,3 +175,13 @@ def test_check_use_explanations_learns():
     Check that the use_explanations method learns.
     # TODO
     """
+
+
+def test_decision_tree():
+    # TODO the test doest not pass if fmodel is DecisionTreeClassifier
+    fmodel = LogisticRegression()
+    gmodel = DecisionTreeClassifier()
+    # Fit our detector
+    detector = SelectiveAbstentionExplanations(model=fmodel, gmodel=gmodel)
+    detector.fit(X_tr, y_tr)
+    assert detector.gpredict(X_te).shape[0] == X_te.shape[0]
