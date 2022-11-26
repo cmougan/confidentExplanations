@@ -16,7 +16,7 @@ from tools.PlugIn import PlugInRule
 
 # %%
 cov = 0.9
-plot = False
+plot = True
 
 res_sax = []
 res_sax_actual_cov = []
@@ -24,10 +24,10 @@ res_sax_base = []
 res_sax_base_actual_cov = []
 res_plugin_actual_cov = []
 res_plugIn = []
-values = np.linspace(0.1, 20, 20)
+values = np.linspace(0.1, 1, 10)
 for disp in values:
     # Create synthetic iid data that depends on a dispersion parameter
-    X, y = make_blobs(n_samples=20000, centers=2, n_features=10, cluster_std=disp)
+    X, y = make_blobs(n_samples=2000, centers=2, n_features=10, cluster_std=disp)
     df = pd.DataFrame(X, columns=["Var%d" % (i + 1) for i in range(X.shape[1])])
     df["label"] = y
 
