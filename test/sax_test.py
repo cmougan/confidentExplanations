@@ -185,3 +185,14 @@ def test_decision_tree():
     detector = SelectiveAbstentionExplanations(model=fmodel, gmodel=gmodel)
     detector.fit(X_tr, y_tr)
     assert detector.gpredict(X_te).shape[0] == X_te.shape[0]
+
+
+def test_check_explanation_space_dim():
+    detector = SelectiveAbstentionExplanations(
+        model=LogisticRegression(),
+        gmodel=LogisticRegression(),
+    )
+    for i in [2, 5, 10]:
+        X, y = make_blobs(n_samples=100, centers=2, n_features=i, random_state=0)
+        detector.fit(X, y)
+        assert detector.get_explanations(X).shape == (100, i)
