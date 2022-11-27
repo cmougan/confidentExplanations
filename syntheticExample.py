@@ -1,20 +1,25 @@
 # %%
+# Imports
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_blobs
-from tools.xaiUtils import SelectiveAbstentionExplanations
-from xgboost import XGBClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, accuracy_score
+import numpy as np
 import matplotlib.pyplot as plt
 
 plt.style.use("seaborn-whitegrid")
-import numpy as np
+from xgboost import XGBClassifier
+
+# Sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_blobs
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, accuracy_score
+
+# Custom libraries
 from tools.PlugIn import PlugInRule
+from tools.xaiUtils import SelectiveAbstentionExplanations
 
 # %%
 cov = 0.9
-plot = False
+plot = True
 
 res_sax = []
 res_sax_actual_cov = []
@@ -22,13 +27,11 @@ res_sax_base = []
 res_sax_base_actual_cov = []
 res_plugin_actual_cov = []
 res_plugIn = []
-values = np.linspace(0.1, 1.5, 20)
+values = np.linspace(0.1, 1, 10)
 for disp in values:
     # Create synthetic iid data that depends on a dispersion parameter
-    X, y = make_blobs(
-        n_samples=2000, centers=2, n_features=2, random_state=0, cluster_std=disp
-    )
-    df = pd.DataFrame(X, columns=["var1", "var2"])
+    X, y = make_blobs(n_samples=2000, centers=2, n_features=10, cluster_std=disp)
+    df = pd.DataFrame(X, columns=["Var%d" % (i + 1) for i in range(X.shape[1])])
     df["label"] = y
 
     X_tr, X_te, y_tr, y_te = train_test_split(
@@ -36,8 +39,8 @@ for disp in values:
         y,
         stratify=y,
         test_size=0.5,
-        random_state=0,
     )
+
     # Fit our detector
     detector = SelectiveAbstentionExplanations(
         model=LogisticRegression(), gmodel=XGBClassifier(), cov=cov
@@ -59,7 +62,7 @@ for disp in values:
     # TODO : name all predictions equally so we can reuse the same code
     # SAX
     ## Accuracy over accepted instances
-    selected = detector.gpredict(X_te).astype(bool)
+    selected = detector.gpredict(X_te)
     preds = detector.fpredict(X_te).astype(bool)
     res_sax.append(
         accuracy_score(y_te[selected], preds[selected]),
@@ -81,34 +84,38 @@ for disp in values:
     res_plugin_actual_cov.append(sum(selected_plug) / len(selected_plug))
 
     # Plots
-    plt.figure(figsize=(10, 10))
-    X1 = df[df["label"] == 1]
-    X0 = df[df["label"] == 0]
-    plt.scatter(X1["var1"], X1["var2"], alpha=0.1, label="Class0")
-    plt.scatter(X0["var1"], X0["var2"], alpha=0.1, label="Class1")
-    plt.scatter(
-        X_te[~selected_plug][:, 0],
-        X_te[~selected_plug][:, 1],
-        alpha=0.5,
-        label="PlugIn",
-    )
-    plt.scatter(
-        X_te[~selected][:, 0], X_te[~selected][:, 1], alpha=0.5, marker="+", label="SAX"
-    )
-    plt.scatter(
-        X_te[~selected_base][:, 0],
-        X_te[~selected_base][:, 1],
-        alpha=0.5,
-        marker=".",
-        label="SAX Base",
-    )
-    plt.legend()
-    plt.show()
+    if plot:
+        plt.figure(figsize=(10, 10))
+        X1 = df[df["label"] == 1]
+        X0 = df[df["label"] == 0]
+        plt.scatter(X1["Var1"], X1["Var2"], alpha=0.1, label="Class0")
+        plt.scatter(X0["Var1"], X0["Var2"], alpha=0.1, label="Class1")
+        plt.scatter(
+            X_te[~selected_plug][:, 0],
+            X_te[~selected_plug][:, 1],
+            alpha=0.5,
+            label="PlugIn",
+        )
+        plt.scatter(
+            X_te[~selected][:, 0],
+            X_te[~selected][:, 1],
+            alpha=0.5,
+            marker="+",
+            label="SAX",
+        )
+        plt.scatter(
+            X_te[~selected_base][:, 0],
+            X_te[~selected_base][:, 1],
+            alpha=0.5,
+            marker=".",
+            label="SAX Base",
+        )
+        plt.legend()
+        plt.show()
 # %%
 plt.figure(figsize=(10, 10))
 plt.title("Accuracy over accepted instances with coverage = {}".format(cov))
 plt.plot(values, res_plugIn, label="PlugIn")
-
 plt.plot(values, res_sax, label="SAX")
 plt.plot(values, res_sax_base, label="SAX Base")
 plt.legend()
